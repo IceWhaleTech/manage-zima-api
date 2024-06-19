@@ -73,7 +73,7 @@ const {
 app.use(jwt({
   secret:jwtconfig.jwtSecretKey,algorithms:['HS256']
 }).unless({
-  path:['/api/gallery/list']
+  path:['/api/gallery/list','/api/upload/batchResize',]
 }))
 
 
