@@ -20,8 +20,8 @@ const readFileMiddleware = (filePath)=> {
 const writeFileMiddleware = (filePath) => {
   return (req, res, next) => {
     const absolutePath = path.join(__dirname, filePath);
-    const dataToWrite = req.fileContentToWrite; // 假设要写入的内容存储在 req.fileContentToWrite
-
+    const dataToWrite = JSON.stringify(req.body); // 假设要写入的内容存储在 req.fileContentToWrite
+    console.log(dataToWrite)
     if (!dataToWrite) {
       return res.status(400).send('No content to write');
     }

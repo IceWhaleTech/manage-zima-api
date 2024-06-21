@@ -11,6 +11,11 @@ const { swaggerSpecs } = require('./utils/swagger');
 const indexRouter = require('./routes/index');
 const galleryRouter = require('./routes/gallery');
 const uploadRouter = require('./routes/upload');
+const docsRouter = require('./routes/docs');
+const eventRouter = require('./routes/event');
+
+
+
 const app = express();
 
 // view engine setup
@@ -63,7 +68,10 @@ app.use((req, res, next) => {
 })
 
 
-// app.use('/', indexRouter);
+app.use('/api/docs', docsRouter)
+app.use('/api/event', eventRouter)
+
+// 这里开始接口需要验证token
 app.use('/api/auth', require('./routes/auth'))
 // 添加token验证
 const jwtconfig = require('./utils/jwt_config.js')
@@ -73,7 +81,7 @@ const {
 app.use(jwt({
   secret:jwtconfig.jwtSecretKey,algorithms:['HS256']
 }).unless({
-  path:['/api/gallery/list','/api/upload/batchResize',]
+  path:['/api/gallery/list',]
 }))
 
 
