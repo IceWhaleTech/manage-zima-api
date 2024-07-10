@@ -1,78 +1,143 @@
 var express = require('express');
 var router = express.Router();
 const yaml = require('js-yaml');
+
+// yaml文件格式转换
 // jsonData = yaml.load(yamlString)    yamlString = yaml.dump(jsonData);
 
 
 // GitHub 仓库信息
-const owner = 'jeremyhann';
-const repo = 'jeremyhann.github.io';
+// const owner = 'jeremyhann'; // 所有人
+// const repo = 'jeremyhann.github.io'; // 项目目录
+
+const owner = 'IceWhaleTech'; 
+const repo = 'ZimaDocs';
+
 const branch = 'main';  // 或其他分支名
 const token = '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';  // 如果是私有仓库，需要 GitHub Token
 
 const headers = { Authorization: `token ${token}` };
 
+// 定义全局主目录
+const MenuPath = 'source/_data/sidebar.yml'
+const LangEnPath = 'themes/zima/languages/en.yml'
+let DocsMenu = {
+  content: null,
+  sha: null
+}
+const LangEn = {
+  content: null,
+  sha:null
+}
 
-
-
+// 获取目录列表
 router.get('/list',async(req, res) => {
-
-  
-  const fileData = await fetchFileContent('source/_data/sidebar.yml');
+  const fileData = await fetchFileContent(MenuPath);
   let content = yaml.load(fileData.content)
-  let { list , category} =  formatList(content)
+  DocsMenu.content = content
+  DocsMenu.sha = fileData.sha
+  // language
+  const langFile = await fetchFileContent(LangEnPath);
+  LangEn.content = yaml.load(langFile.content) 
+  LangEn.sha = langFile.sha
+
+  let { list , category} =  formatList(content,LangEn.content)
   res.cc({
     ...fileData,
     content,
     category,
     list,
+    langEn: LangEn.content
   })
 })
 
-router.get('/doc/:path',async(req, res) => {
-  const fileData = await fetchFileContent('source/_data/sidebar.yml');
-  let content = yaml.load(fileData.content)
+// 获取指定文章
+router.get('/doc/:fileName',async(req, res) => {
+  console.log(req.params.fileName)
+  let {fileName} = req.params
+  let {path} = req.query
+  const fileData = await fetchFileContent(`source/${path}/`+fileName);
+  let content = fileData.content
   res.cc({
     ...fileData,
     content,
   })
 })
 
-
+// 新增或者保存 type : add edit
 router.post('/save',async(req, res) => {
-  // debugger
-  const { title , category , content , sha} = req.body
-  const filePath = `source/docs/${title.replaceAll(' ','-')}.md`;  // 修改的文件路径
+  const { type , title, title_origin  ,category , category_origin , fileKey , fileName , content , sha} = req.body
+  // 保存文章
+  const filePath = `source/${category[0]}/${fileName}.md`;  // 修改的文件路径
   const commitMessage = 'Update file content';  // 提交信息
   await pushFile(filePath, content, commitMessage ,sha);
 
+  //更新 slidebar 文件 
+  if(type=='add'||(category_origin.length && (category[1] !== category_origin [1]))){
+    // 如果缓存不存在 先获取 文件
+    if(!DocsMenu.sha){
+      const fileData = await fetchFileContent(MenuPath);
+      DocsMenu.content = yaml.load(fileData.content)
+      DocsMenu.sha = fileData.sha
+    }
+    let menuContent = DocsMenu.content
+    // 如果存在旧标题 先删除相关键值 
+    if(category_origin.length){
+      delete menuContent[category_origin[0]][category_origin[1]][fileKey]
+    }
+    menuContent[category[0]][category[1]][fileKey] = fileName + '.html'
+    await pushFile(MenuPath, yaml.dump(menuContent), 'update slidebar' ,DocsMenu.sha);
+  }
+  
+  // 更新 language 文件
+  if(title_origin != title){
+    if(!LangEn.sha){
+      const langFile = await fetchFileContent(LangEnPath);
+      LangEn.content = yaml.load(langFile.content) 
+      LangEn.sha = langFile.sha
+    }
+    let langContent = LangEn.content;
+    // 先删除原有
+    if(type == 'edit') {
+      delete langContent['sidebar'][category_origin[0]][fileKey]
+    }
+    langContent['sidebar'][category[0]][fileKey] = title
+    // 异步延迟推送 防止异步编译导致展示不正确的情况
+    setTimeout(() => {
+      pushFile(LangEnPath, yaml.dump(langContent), 'update langEn' ,LangEn.sha);
+    }, 3000);
+  }
+  
   res.cc({message:'Content updated successfully'})
 })
 
 
 
-function formatList(content){
+function formatList(content, langEn){
   let list = [] //tableList
   let category = []
-  let path1Arry = Object.keys(content) 
+  let path1Arry = Object.keys(content)
+  let sidebar = langEn.sidebar
   path1Arry.map((path1,index)=>{
     let path2Arry = Object.keys(content[path1])
     category.push({
-      label:formatText(path1),
+      label:langEn.menu[path1],
       value:path1,
       children:[]
     })
     path2Arry.map(path2=>{
       let path3Arry = Object.keys(content[path1][path2])
       category[index].children.push({
-        label:formatText(path2),
+        label:sidebar[path1][path2],
         value:path2,
       })
 
       path3Arry.map(path3=>{
         list.push({
-          title:formatText(path3),
-          category:[path1,path2],
+          title: sidebar[path1][path3],
+          category:[langEn.menu[path1],sidebar[path1][path2]],
+          categoryKey:[path1,path2],
+          fileKey:path3,
           fileName:content[path1][path2][path3]
         })
       })

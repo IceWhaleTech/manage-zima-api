@@ -64,7 +64,7 @@ router.get('/list', (req, res) => {
   db.query(query, (err, results) => {
     if (err) {
       return res.err(err.message);
-    }
+    } 
     res.cc(results.sort((a,b) => a.sort - b.sort));
   });
 })
@@ -80,6 +80,21 @@ router.post('/add', (req, res) => {
     }
     res.cc({ message: '新增成功' });
   });
+})
+// 批量新增
+router.post('/batchAdd', (req, res) => {
+  const { list } = req.body
+  const create_time = new Date()
+  list.forEach(item => {
+    const { title, src, status, sort, category, type } = item;
+    const query = `INSERT INTO ${table} (title, src, status, sort, create_time, category, type) VALUES (?,?,?,?,?,?,?)`;
+    db.query(query, [title, src, status, sort, create_time, category, type], (err, result) => {
+      if (err) {
+        return res.err(err.message);
+      }
+    })
+  })
+  res.cc({ message: '新增成功' });
 })
 
 // 修改

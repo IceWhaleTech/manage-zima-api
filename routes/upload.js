@@ -8,14 +8,17 @@ const fs = require('fs')
 // 设置multer存储配置
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'public/images');
+        let path = req.body.path || '/images'
+        cb(null, 'public'+path);
     },
     filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname));
+        cb(null, Date.now()+ '_' + file.originalname);
     }
 });
 
 const upload = multer({ storage: storage });
+
+
 
 // 创建上传图片的接口
 router.post('/image', upload.single('image'), async(req, res) => {
@@ -31,7 +34,14 @@ router.post('/image', upload.single('image'), async(req, res) => {
         res.status(400).json({ message: 'Image upload failed', error: error.message });
     }
 });
-
+// 图片上传及批量上传  可选参数 req.body.path '/images'|| '/docs'
+router.post('/batchImages',upload.array('file',10),async(req, res) => {
+  let files = req.files;
+  res.cc(files.map(item => {
+    item.filePath = item.path.replace('public','/static')
+    return item
+  }))
+})
 
 // router.get('/batchResize',(req, res) => {
 //   // 读取目录下的所有文件

@@ -68,8 +68,7 @@ app.use((req, res, next) => {
 })
 
 
-app.use('/api/docs', docsRouter)
-app.use('/api/event', eventRouter)
+
 
 // 这里开始接口需要验证token
 app.use('/api/auth', require('./routes/auth'))
@@ -85,9 +84,10 @@ app.use(jwt({
 }))
 
 
-
-app.use('/api/gallery', galleryRouter);
 app.use('/api/upload', uploadRouter);
+app.use('/api/docs', docsRouter)
+app.use('/api/event', eventRouter)
+app.use('/api/gallery', galleryRouter);
 
 //全局中间件
 app.use(function (err, req, res, next) {
