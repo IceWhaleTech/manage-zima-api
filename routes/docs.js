@@ -7,14 +7,14 @@ const yaml = require('js-yaml');
 
 
 // GitHub 仓库信息
-// const owner = 'jeremyhann'; // 所有人
-// const repo = 'jeremyhann.github.io'; // 项目目录
+const owner = 'jeremyhann'; // 所有人
+const repo = 'jeremyhann.github.io'; // 项目目录
 
-const owner = 'IceWhaleTech'; 
-const repo = 'ZimaDocs';
+// const owner = 'IceWhaleTech'; 
+// const repo = 'ZimaDocs';
 
 const branch = 'main';  // 或其他分支名
-const token = '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';  // 如果是私有仓库，需要 GitHub Token
+const token = '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';  // 如果是私有仓库，需要 GitHub Token
 
 const headers = { Authorization: `token ${token}` };
 
@@ -53,7 +53,7 @@ router.get('/list',async(req, res) => {
 
 // 获取指定文章
 router.get('/doc/:fileName',async(req, res) => {
-  console.log(req.params.fileName)
+  // console.log(req.params.fileName)
   let {fileName} = req.params
   let {path} = req.query
   const fileData = await fetchFileContent(`source/${path}/`+fileName);
@@ -158,10 +158,13 @@ const formatText = (text)=>{
 // 获取文件内容的函数
 async function fetchFileContent(filePath) {
   const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`;
-  
   try {
       const response = await fetch(url, { headers });
+      if (!response.ok) {
+        throw new Error(`Error fetching file: ${response.statusText}`);
+      }
       const data = await response.json();
+      // console.log('Fetched data:', data);
       const content = Buffer.from(data.content, 'base64').toString('utf-8');
       const sha = data.sha;
       return { content, sha };
