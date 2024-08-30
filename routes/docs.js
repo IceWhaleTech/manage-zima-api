@@ -1,6 +1,8 @@
 var express = require('express');
 var router = express.Router();
 const yaml = require('js-yaml');
+const { GITHUBTOKEN } = require('../utils/constant');
+
 
 // yaml文件格式转换
 // jsonData = yaml.load(yamlString)    yamlString = yaml.dump(jsonData);
@@ -14,7 +16,7 @@ const repo = 'jeremyhann.github.io'; // 项目目录
 // const repo = 'ZimaDocs';
 
 const branch = 'main';  // 或其他分支名
-const token = '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';  // 如果是私有仓库，需要 GitHub Token
+const token = GITHUBTOKEN;  // 如果是私有仓库，需要 GitHub Token
 
 const headers = { Authorization: `token ${token}` };
 
@@ -90,7 +92,7 @@ router.post('/save',async(req, res) => {
   }
   
   // 更新 language 文件
-  if(title_origin != title){
+  if(title_origin != title||(category_origin.length && (category[1] !== category_origin [1]))){
     if(!LangEn.sha){
       const langFile = await fetchFileContent(LangEnPath);
       LangEn.content = yaml.load(langFile.content) 
