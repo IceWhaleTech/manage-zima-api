@@ -7,14 +7,16 @@ const joi = require('joi')
 // pattern是正则
 
 // 账号的验证
-const account = joi.string().min(6).max(20).required()
+const account = joi.string().min(6).max(40).required()
 // 密码的验证
 const password = joi.string().min(6).required()
+const name = joi.string().min(3).max(20)
 
 exports.login_limit ={
 	// 表示对req.body里面的数据进行验证
 	body:{
 		account,
-		password
+		password,
+    name
 	}
 }

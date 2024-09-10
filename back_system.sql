@@ -23,6 +23,26 @@ CREATE TABLE `gallery` (
 
 
 -- ----------------------------
+-- Table structure for feedback
+-- ----------------------------
+DROP TABLE IF EXISTS `feedback`;
+CREATE TABLE `feedback` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `create_time` varchar(255) DEFAULT NULL,
+  `update_time` varchar(255) DEFAULT NULL,
+  `fb_system` varchar(255) DEFAULT NULL,
+  `fb_page` varchar(255) DEFAULT NULL,
+  `fb_name` varchar(255) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `content` varchar(255) DEFAULT NULL,
+  `operator` varchar(255) DEFAULT NULL,
+  `remark` varchar(255) DEFAULT NULL,
+  `status` varchar(255) DEFAULT '1',
+  `valid` varchar(255) DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+-- ----------------------------
 -- Table structure for users
 -- ----------------------------
 DROP TABLE IF EXISTS `users`;

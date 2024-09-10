@@ -25,7 +25,6 @@ router.post('/login',expressJoi(login_limit),(req, res) => {
       if (results.length !== 1) return res.err('账号或密码错误')
       // 第二步 对前端传过来的密码进行解密
       const compareResult = bcrypt.compareSync(loginfo.password, results[0].password)
-      console.log(compareResult)
       if (!compareResult) {
           return res.err('登录失败')
       }
@@ -86,9 +85,12 @@ router.post('/register',expressJoi(login_limit), (req, res) => {
       const identity = '用户'
       // 创建时间
       const create_time = new Date()
+      console.log(reginfo)
       db.query(sql1, {
           account: reginfo.account,
           password: reginfo.password,
+          name: reginfo.name,
+          email: reginfo.account,
           // 身份
           identity,
           // 创建时间

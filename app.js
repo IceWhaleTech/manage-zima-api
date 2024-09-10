@@ -71,9 +71,10 @@ app.use((req, res, next) => {
 
 
 app.use('/api/search', searchRouter);
+
 // 这里开始接口需要验证token
 app.use('/api/auth', require('./routes/auth'))
-// 添加token验证
+// 添加token验证 用户信息绑定在 req.auth
 const jwtconfig = require('./utils/jwt_config.js')
 const {
   expressjwt: jwt
@@ -81,15 +82,15 @@ const {
 app.use(jwt({
   secret:jwtconfig.jwtSecretKey,algorithms:['HS256']
 }).unless({
-  path:['/api/gallery/list',]
+  // 添加不需要验证的接口
+  path:['/api/gallery/list','/api/feedback/add']
 }))
-
 
 app.use('/api/upload', uploadRouter);
 app.use('/api/docs', docsRouter)
 app.use('/api/event', eventRouter)
 app.use('/api/gallery', galleryRouter);
-
+app.use('/api/feedback', require('./routes/feedback'))
 
 //全局中间件
 app.use(function (err, req, res, next) {
@@ -124,5 +125,6 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
 
 module.exports = app;
