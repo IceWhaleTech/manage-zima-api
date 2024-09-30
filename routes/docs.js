@@ -9,11 +9,11 @@ const { GITHUBTOKEN } = require('../utils/constant');
 
 
 // GitHub 仓库信息
-const owner = 'jeremyhann'; // 所有人
-const repo = 'jeremyhann.github.io'; // 项目目录
+// const owner = 'jeremyhann'; // 所有人
+// const repo = 'jeremyhann.github.io'; // 项目目录
 
-// const owner = 'IceWhaleTech'; 
-// const repo = 'ZimaDocs';
+const owner = 'IceWhaleTech'; 
+const repo = 'ZimaDocs';
 
 const branch = 'main';  // 或其他分支名
 const token = GITHUBTOKEN;  // 如果是私有仓库，需要 GitHub Token
