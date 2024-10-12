@@ -83,7 +83,7 @@ app.use(jwt({
   secret:jwtconfig.jwtSecretKey,algorithms:['HS256']
 }).unless({
   // 添加不需要验证的接口
-  path:['/api/gallery/list','/api/feedback/add']
+  path:['/api/gallery/list','/api/feedback/add','/api/share/data']
 }))
 
 app.use('/api/upload', uploadRouter);
@@ -91,6 +91,7 @@ app.use('/api/docs', docsRouter)
 app.use('/api/event', eventRouter)
 app.use('/api/gallery', galleryRouter);
 app.use('/api/feedback', require('./routes/feedback'))
+app.use('/api/share', require('./routes/share'))
 
 //全局中间件
 app.use(function (err, req, res, next) {
