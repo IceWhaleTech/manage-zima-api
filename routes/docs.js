@@ -9,11 +9,12 @@ const { GITHUBTOKEN } = require('../utils/constant');
 
 
 // GitHub 仓库信息
-// const owner = 'jeremyhann'; // 所有人
-// const repo = 'jeremyhann.github.io'; // 项目目录
-
-const owner = 'IceWhaleTech'; 
-const repo = 'ZimaDocs';
+// 测试环境
+const owner = 'jeremyhann'; // 所有人
+const repo = 'ZimaDocs'; // 项目目录
+// 生产环境
+// const owner = 'IceWhaleTech'; 
+// const repo = 'ZimaDocs';
 
 const branch = 'main';  // 或其他分支名
 const token = GITHUBTOKEN;  // 如果是私有仓库，需要 GitHub Token
@@ -59,11 +60,17 @@ router.get('/doc/:fileName',async(req, res) => {
   let {fileName} = req.params
   let {path} = req.query
   const fileData = await fetchFileContent(`source/${path}/`+fileName);
-  let content = fileData.content
-  res.cc({
-    ...fileData,
-    content,
-  })
+  if(fileData && fileData.content){
+    let content = fileData.content
+    res.cc({
+      ...fileData,
+      content,
+    })
+  }else{
+    res.cc({
+      message:'file not found'
+    })
+  }
 })
 
 // 新增或者保存 type : add edit
@@ -74,7 +81,7 @@ router.post('/save',async(req, res) => {
   const commitMessage = 'Update file content';  // 提交信息
   await pushFile(filePath, content, commitMessage ,sha);
 
-  //更新 slidebar 文件 
+  //更新 slidebar 文件 新增或者分类变更
   if(type=='add'||(category_origin.length && (category[1] !== category_origin [1]))){
     // 如果缓存不存在 先获取 文件
     if(!DocsMenu.sha){
@@ -91,7 +98,7 @@ router.post('/save',async(req, res) => {
     await pushFile(MenuPath, yaml.dump(menuContent), 'update slidebar' ,DocsMenu.sha);
   }
   
-  // 更新 language 文件
+  // 更新 language 文件 title变更或者分类变更
   if(title_origin != title||(category_origin.length && (category[1] !== category_origin [1]))){
     if(!LangEn.sha){
       const langFile = await fetchFileContent(LangEnPath);
