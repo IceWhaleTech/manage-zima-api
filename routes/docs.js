@@ -10,11 +10,11 @@ const { GITHUBTOKEN } = require('../utils/constant');
 
 // GitHub 仓库信息
 // 测试环境
-const owner = 'jeremyhann'; // 所有人
-const repo = 'ZimaDocs'; // 项目目录
+// const owner = 'jeremyhann'; // 所有人
+// const repo = 'ZimaDocs'; // 项目目录
 // 生产环境
-// const owner = 'IceWhaleTech'; 
-// const repo = 'ZimaDocs';
+const owner = 'IceWhaleTech'; 
+const repo = 'ZimaDocs';
 
 const branch = 'main';  // 或其他分支名
 const token = GITHUBTOKEN;  // 如果是私有仓库，需要 GitHub Token
@@ -23,12 +23,16 @@ const headers = { Authorization: `token ${token}` };
 
 // 定义全局主目录
 const MenuPath = 'source/_data/sidebar.yml'
-const LangEnPath = 'themes/zima/languages/en.yml'
+const LangFilePath = 'themes/zima/languages/'
+const LangCodes = ['en','zh','jp','es','pt-PT']
+
+// 缓存 sidebar 文件
 let DocsMenu = {
   content: null,
   sha: null
 }
-const LangEn = {
+let LangDict = null
+let LangEn = {
   content: null,
   sha:null
 }
@@ -40,20 +44,27 @@ router.get('/list',async(req, res) => {
   DocsMenu.content = content
   DocsMenu.sha = fileData.sha
   // language
-  const langFile = await fetchFileContent(LangEnPath);
-  LangEn.content = yaml.load(langFile.content) 
-  LangEn.sha = langFile.sha
-
+  LangDict = null
+  LangDict = await fetchLangDict()
+  LangEn = LangDict['en']
   let { list , category} =  formatList(content,LangEn.content)
   res.cc({
     ...fileData,
     content,
     category,
     list,
+    langDict: LangDict,
     langEn: LangEn.content
   })
 })
-
+// 获取语言字典
+router.get('/langDict',async(req, res) => {
+  LangDict = null
+  LangDict = await fetchLangDict()
+  res.cc({
+    langDict: LangDict
+  })
+})
 // 获取指定文章
 router.get('/doc/:fileName',async(req, res) => {
   // console.log(req.params.fileName)
@@ -67,7 +78,8 @@ router.get('/doc/:fileName',async(req, res) => {
       content,
     })
   }else{
-    res.cc({
+    res.send({
+      status:404,
       message:'file not found'
     })
   }
@@ -75,9 +87,9 @@ router.get('/doc/:fileName',async(req, res) => {
 
 // 新增或者保存 type : add edit
 router.post('/save',async(req, res) => {
-  const { type , title, title_origin  ,category , category_origin , fileKey , fileName , content , sha} = req.body
+  const { type ,lang, title, title_origin  ,category , category_origin , fileKey , fileName , content , sha} = req.body
   // 保存文章
-  const filePath = `source/${category[0]}/${fileName}.md`;  // 修改的文件路径
+  const filePath = `source/${lang==='en'?'':lang+'/'}${category[0]}/${fileName}.md`;  // 修改的文件路径
   const commitMessage = 'Update file content';  // 提交信息
   await pushFile(filePath, content, commitMessage ,sha);
 
@@ -96,30 +108,26 @@ router.post('/save',async(req, res) => {
     }
     menuContent[category[0]][category[1]][fileKey] = fileName + '.html'
     await pushFile(MenuPath, yaml.dump(menuContent), 'update slidebar' ,DocsMenu.sha);
+
   }
   
-  // 更新 language 文件 title变更或者分类变更
-  if(title_origin != title||(category_origin.length && (category[1] !== category_origin [1]))){
-    if(!LangEn.sha){
-      const langFile = await fetchFileContent(LangEnPath);
-      LangEn.content = yaml.load(langFile.content) 
-      LangEn.sha = langFile.sha
-    }
-    let langContent = LangEn.content;
+  // 更新 language 文件 title变更
+  if(title_origin != title){
+    LangDict = await fetchLangDict()
+    // let langContent = LangEn.content;
+    let currentLang = LangDict[lang]
+    let langContent = currentLang.content;
     // 先删除原有
     if(type == 'edit') {
       delete langContent['sidebar'][category_origin[0]][fileKey]
     }
     langContent['sidebar'][category[0]][fileKey] = title
-    // 异步延迟推送 防止异步编译导致展示不正确的情况
-    setTimeout(() => {
-      pushFile(LangEnPath, yaml.dump(langContent), 'update langEn' ,LangEn.sha);
-    }, 3000);
+    // 推送
+    await pushFile(LangFilePath+lang+'.yml', yaml.dump(langContent), 'update lang' + lang ,currentLang.sha);
   }
   
   res.cc({message:'Content updated successfully'})
 })
-
 
 
 function formatList(content, langEn){
@@ -213,6 +221,21 @@ async function pushFile(filePath, content, message , sha) {
   }
 }
 
-
+async function fetchLangDict(){
+  let langDict = {}
+  if(LangDict){
+    return LangDict
+  }
+  for(let lang of LangCodes){
+    const langFile = await fetchFileContent(`themes/zima/languages/${lang}.yml`);
+    if(langFile && langFile.content){
+      langDict[lang] = {
+        sha: langFile.sha,
+        content: yaml.load(langFile.content)
+      } 
+    }
+  }
+  return langDict
+}
 
 module.exports = router;
